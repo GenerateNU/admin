@@ -20,6 +20,7 @@ class MediaVisibility(StrEnum):
     PUBLIC = "public"
     PRIVATE = "private"
 
+
 PRESIGN_CACHE_RATIO = 0.8
 PUBLIC_PREFIX = "public"
 PRIVATE_PREFIX = "private"

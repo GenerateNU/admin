@@ -1,8 +1,5 @@
 import asyncio
-import time
-from collections import defaultdict
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Protocol
 
@@ -53,84 +50,6 @@ class SingleFlight:
     async def lock_for(self, key: str) -> asyncio.Lock:
         async with self._guard:
             return self._locks.setdefault(key, asyncio.Lock())
-
-
-@dataclass(slots=True)
-class Entry:
-    value: Any
-    expires_at: float
-
-
-class InProcessCache:
-    def __init__(
-        self, *, default_ttl: float = DEFAULT_TTL_SECONDS, max_entries: int = 4096
-    ) -> None:
-        self._entries: dict[str, Entry] = {}
-        self._versions: dict[CacheNamespace, int] = defaultdict(int)
-        self._flight = SingleFlight()
-        self._default_ttl = default_ttl
-        self._max_entries = max_entries
-
-    def _qualified(self, namespace: CacheNamespace, key: str) -> str:
-        return f"{namespace.value}:v{self._versions[namespace]}:{key}"
-
-    async def bump(self, namespace: CacheNamespace) -> None:
-        self._versions[namespace] += 1
-
-    async def version(self, namespace: CacheNamespace) -> int:
-        return self._versions[namespace]
-
-    async def close(self) -> None:
-        self._entries.clear()
-
-    def _read(self, qualified: str) -> Any | None:
-        entry = self._entries.get(qualified)
-        if entry is None:
-            return None
-        if time.monotonic() >= entry.expires_at:
-            self._entries.pop(qualified, None)
-            return None
-        return entry.value
-
-    def _evict(self) -> None:
-        now = time.monotonic()
-        for key in [key for key, entry in self._entries.items() if entry.expires_at <= now]:
-            self._entries.pop(key, None)
-
-        overflow = len(self._entries) - self._max_entries + 1
-        if overflow > 0:
-            expiring_first = sorted(self._entries.items(), key=lambda item: item[1].expires_at)
-            for key, _ in expiring_first[:overflow]:
-                self._entries.pop(key, None)
-
-    async def fetch(
-        self,
-        namespace: CacheNamespace,
-        key: str,
-        loader: Loader,
-        *,
-        adapter: TypeAdapter[Any],
-        ttl: float | None = None,
-    ) -> Any:
-        qualified = self._qualified(namespace, key)
-
-        cached = self._read(qualified)
-        if cached is not None:
-            return cached
-
-        lock = await self._flight.lock_for(qualified)
-        async with lock:
-            cached = self._read(qualified)
-            if cached is not None:
-                return cached
-
-            value = await loader()
-            if len(self._entries) >= self._max_entries:
-                self._evict()
-            self._entries[qualified] = Entry(
-                value=value, expires_at=time.monotonic() + (ttl or self._default_ttl)
-            )
-            return value
 
 
 class RedisCache:
@@ -185,11 +104,7 @@ class RedisCache:
 
 async def build_cache(redis_url: str, *, default_ttl: float = DEFAULT_TTL_SECONDS) -> Cache:
     if not redis_url:
-        logger.warning(
-            "cache_in_process",
-            detail="REDIS_URL is unset; cache is per-process and unsafe with multiple workers",
-        )
-        return InProcessCache(default_ttl=default_ttl)
+        raise RuntimeError("REDIS_URL is required")
 
     client: Redis = Redis.from_url(redis_url, decode_responses=False)
     try:
