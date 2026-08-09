@@ -1,17 +1,21 @@
-"""users, roles, invitations and access requests
+"""rbac
 
-Revision ID: 0003
-Revises: 0002
+Revision ID: ce8c0c720681
+Revises: f453db2e2da7
+Create Date: 2026-08-08 22:53:34.662744
 """
 
 from collections.abc import Sequence
 
+import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0003"
-down_revision: str | None = "0002"
+
+revision: str = 'ce8c0c720681'
+down_revision: str | None = 'f453db2e2da7'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
+
 
 UPGRADE = """
 CREATE TABLE permissions (

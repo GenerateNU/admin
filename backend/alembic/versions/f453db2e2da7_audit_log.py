@@ -1,17 +1,21 @@
-"""audit_logs, the append-only record of who changed what
+"""audit log
 
-Revision ID: 0002
-Revises: 0001
+Revision ID: f453db2e2da7
+Revises: 3ec5081bde0b
+Create Date: 2026-08-08 22:53:05.480514
 """
 
 from collections.abc import Sequence
 
+import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0002"
-down_revision: str | None = "0001"
+
+revision: str = 'f453db2e2da7'
+down_revision: str | None = '3ec5081bde0b'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
+
 
 UPGRADE = """
 CREATE TABLE audit_logs (

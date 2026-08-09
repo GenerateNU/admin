@@ -1,14 +1,17 @@
-"""shared helpers every table builds on
+"""base
 
-Revision ID: 0001
-Revises:
+Revision ID: 3ec5081bde0b
+Revises: 
+Create Date: 2026-08-08 22:51:50.576882
 """
 
 from collections.abc import Sequence
 
+import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0001"
+
+revision: str = '3ec5081bde0b'
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None

@@ -43,12 +43,13 @@ class AuthContext:
     user: UserRead
     permissions: PermissionSet
 
-
-async def get_connection(request: Request) -> AsyncIterator[asyncpg.Connection]:
+async def get_connection(
+    request: Request,
+) -> AsyncIterator[asyncpg.pool.PoolConnectionProxy]:
     pool: asyncpg.Pool = request.app.state.pool
+
     async with pool.acquire() as connection, connection.transaction():
         yield connection
-
 
 def get_read_cache(request: Request) -> CacheProtocol:
     return request.app.state.cache
