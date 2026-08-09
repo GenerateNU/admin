@@ -9,6 +9,9 @@ default:
 install:
     cd {{backend}} && uv sync --all-groups
 
+hooks:
+    cd {{backend}} && uv run pre-commit install
+
 up:
     docker compose up -d --wait
 
@@ -19,8 +22,11 @@ reset: down
     docker volume rm generate-admin_postgres-data || true
     @just up
 
+connect-db:
+    docker compose exec postgres psql -U postgres -d generate_admin
+
 dev:
-    cd {{backend}} && uv run uvicorn generate_admin.main:app --reload --reload-dir src \
+    cd {{backend}} && uv run uvicorn admin.main:app --reload --reload-dir src \
         --host ${APP_HOST:-0.0.0.0} --port ${APP_PORT:-8000}
 
 migrate:
@@ -33,7 +39,7 @@ revision message:
     cd {{backend}} && uv run alembic revision -m "{{message}}"
 
 seed:
-    cd {{backend}} && uv run python -m generate_admin.cli seed
+    cd {{backend}} && uv run python -m admin.cli seed
 
 test:
     cd {{backend}} && uv run pytest
