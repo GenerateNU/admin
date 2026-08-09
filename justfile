@@ -9,6 +9,9 @@ default:
 install:
     cd {{backend}} && uv sync --all-groups
 
+hooks:
+    cd {{backend}} && uv run pre-commit install
+
 up:
     docker compose up -d --wait
 

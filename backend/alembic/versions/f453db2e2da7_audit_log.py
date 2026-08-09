@@ -9,9 +9,8 @@ from collections.abc import Sequence
 
 from alembic import op
 
-
-revision: str = 'f453db2e2da7'
-down_revision: str | None = '3ec5081bde0b'
+revision: str = "f453db2e2da7"
+down_revision: str | None = "3ec5081bde0b"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

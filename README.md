@@ -11,6 +11,7 @@
 ```bash
 cp .env.template .env    # defaults already match docker-compose
 just install
+just hooks               # pre-commit hook, one time
 just up                  # postgres + redis + localstack
 just migrate
 just seed                # roles, permissions, first owner invitation
@@ -45,6 +46,7 @@ Docker compose uses offset host ports so it does not collide with anything alrea
 | `just fmt`         | ruff autofix + format            |
 | `just typecheck`   | mypy over `src`                  |
 | `just check`       | lint + typecheck + test          |
+| `just hooks`       | install the pre-commit hook      |
 
 ## Tests
 
