@@ -1,17 +1,15 @@
 """base
 
 Revision ID: 3ec5081bde0b
-Revises: 
+Revises:
 Create Date: 2026-08-08 22:51:50.576882
 """
 
 from collections.abc import Sequence
 
-import sqlalchemy as sa
 from alembic import op
 
-
-revision: str = '3ec5081bde0b'
+revision: str = "3ec5081bde0b"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None

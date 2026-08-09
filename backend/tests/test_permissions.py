@@ -2,15 +2,15 @@ import uuid
 
 import pytest
 
-from generate_admin.core.errors import PrivilegeEscalationError
-from generate_admin.domain.access import PermissionSet
-from generate_admin.domain.permissions import (
+from admin.core.errors import PrivilegeEscalationError
+from admin.domain.access import PermissionSet
+from admin.domain.permissions import (
     ROLE_DEFINITIONS_BY_KEY,
     Permission,
     SystemRole,
 )
-from generate_admin.schemas.role import RoleRead
-from generate_admin.services.guards import ensure_can_delegate
+from admin.schemas.role import RoleRead
+from admin.services.guards import ensure_can_delegate
 
 
 def role_for(key: SystemRole) -> RoleRead:

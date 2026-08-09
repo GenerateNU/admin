@@ -3,8 +3,8 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from generate_admin.core.config import Settings, get_settings
-from generate_admin.main import create_app
+from admin.core.config import Settings, get_settings
+from admin.main import create_app
 
 
 @pytest.fixture(scope="session")

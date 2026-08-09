@@ -38,7 +38,7 @@ Docker compose uses offset host ports so it does not collide with anything alrea
 | `just dev`         | run the API with reload          |
 | `just migrate`     | apply migrations                 |
 | `just rollback`    | undo the last migration          |
-| `just revision m`  | create a migration               |
+| `just revision <name>`  | create a migration               |
 | `just seed`        | sync roles and permissions       |
 | `just test`        | pytest                           |
 | `just lint`        | ruff check + format check        |

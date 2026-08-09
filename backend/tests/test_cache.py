@@ -4,8 +4,8 @@ import uuid
 import pytest
 from pydantic import TypeAdapter
 
-from generate_admin.core.cache import Cache, CacheNamespace, build_cache
-from generate_admin.core.config import Settings
+from admin.core.cache import Cache, CacheNamespace, build_cache
+from admin.core.config import Settings
 
 STRING_ADAPTER = TypeAdapter(str)
 

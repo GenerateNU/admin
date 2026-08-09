@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine
 
-from generate_admin.core.config import get_settings
+from admin.core.config import get_settings
 
 config = context.config
 
