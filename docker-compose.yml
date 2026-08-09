@@ -1,0 +1,43 @@
+name: generate-admin
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: generate_admin
+    ports:
+      - "55532:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d generate_admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "56479:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  localstack:
+    image: localstack/localstack:3
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: us-east-1
+      BUCKET_NAME: generate-admin-local
+    ports:
+      - "4576:4566"
+    volumes:
+      - ./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init.sh:ro
+
+volumes:
+  postgres-data:
