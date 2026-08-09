@@ -1,4 +1,4 @@
-# Generate Admin
+# admin
 
 ## Requirements
 
