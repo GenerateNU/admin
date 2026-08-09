@@ -8,6 +8,12 @@ class Repository:
         self.connection = connection
 
 
+def required_row(row: asyncpg.Record | None) -> asyncpg.Record:
+    if row is None:
+        raise RuntimeError("statement returned no row")
+    return row
+
+
 class ConditionSet:
     def __init__(self, *, start_index: int = 1) -> None:
         self._clauses: list[str] = []

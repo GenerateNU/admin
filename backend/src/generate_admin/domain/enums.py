@@ -1,6 +1,33 @@
 from enum import StrEnum
 
 
+class UserStatus(StrEnum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+
+
+class AccessState(StrEnum):
+    NO_ACCESS = "no_access"
+    PENDING = "pending"
+    DENIED = "denied"
+    ACTIVE = "active"
+    NO_ROLES = "no_roles"
+    SUSPENDED = "suspended"
+
+
+class InvitationStatus(StrEnum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+
+
+class AccessRequestStatus(StrEnum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    DENIED = "denied"
+
+
 class AuditAction(StrEnum):
     USER_PROVISIONED = "user.provisioned"
     USER_SUSPENDED = "user.suspended"

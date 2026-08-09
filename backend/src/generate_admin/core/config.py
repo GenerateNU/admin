@@ -109,6 +109,8 @@ class Settings(BaseConfig):
 
     cors_allowed_origins_raw: str = Field(default="", alias="CORS_ALLOWED_ORIGINS")
     redis_url: str = Field(default="", alias="REDIS_URL")
+    initial_owner_email: str = ""
+    invitation_ttl_hours: int = 336
 
     @property
     def cors_allowed_origins(self) -> list[str]:

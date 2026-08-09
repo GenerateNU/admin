@@ -32,6 +32,9 @@ rollback:
 revision message:
     cd {{backend}} && uv run alembic revision -m "{{message}}"
 
+seed:
+    cd {{backend}} && uv run python -m generate_admin.cli seed
+
 test:
     cd {{backend}} && uv run pytest
 
