@@ -99,24 +99,24 @@ class AccessService:
         )
         await self._invitations.mark_accepted(invitation.id)
 
-        await self._audit.record(
-            AuditEntry(
-                actor_id=user.id,
-                actor_email=user.email,
-                action=AuditAction.INVITATION_ACCEPTED,
-                resource_type="invitation",
-                resource_id=str(invitation.id),
-                after={"user_id": str(user.id), "role_key": invitation.role.key},
-            )
-        )
-        await self._audit.record(
-            AuditEntry(
-                actor_id=user.id,
-                actor_email=user.email,
-                action=AuditAction.USER_PROVISIONED,
-                resource_type="user",
-                resource_id=str(user.id),
-                after={"email": user.email, "source": "invitation"},
-            )
+        await self._audit.record_many(
+            [
+                AuditEntry(
+                    actor_id=user.id,
+                    actor_email=user.email,
+                    action=AuditAction.INVITATION_ACCEPTED,
+                    resource_type="invitation",
+                    resource_id=str(invitation.id),
+                    after={"user_id": str(user.id), "role_key": invitation.role.key},
+                ),
+                AuditEntry(
+                    actor_id=user.id,
+                    actor_email=user.email,
+                    action=AuditAction.USER_PROVISIONED,
+                    resource_type="user",
+                    resource_id=str(user.id),
+                    after={"email": user.email, "source": "invitation"},
+                ),
+            ]
         )
         return user

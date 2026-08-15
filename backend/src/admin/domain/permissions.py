@@ -12,6 +12,8 @@ class Permission(StrEnum):
     ACCESS_REQUESTS_READ = "core.access_requests.read"
     ACCESS_REQUESTS_REVIEW = "core.access_requests.review"
     AUDIT_READ = "core.audit.read"
+    MEDIA_READ = "core.media.read"
+    MEDIA_DELETE = "core.media.delete"
 
     @property
     def description(self) -> str:
@@ -28,6 +30,8 @@ PERMISSION_DESCRIPTIONS: dict[Permission, str] = {
     Permission.ACCESS_REQUESTS_READ: "View pending access requests",
     Permission.ACCESS_REQUESTS_REVIEW: "Approve or deny access requests",
     Permission.AUDIT_READ: "Read the audit log",
+    Permission.MEDIA_READ: "View private files uploaded by other members",
+    Permission.MEDIA_DELETE: "Delete files uploaded by other members",
 }
 
 

@@ -28,6 +28,10 @@ class AccessRequestStatus(StrEnum):
     DENIED = "denied"
 
 
+class MediaPurpose(StrEnum):
+    AVATAR = "avatar"
+
+
 class AuditAction(StrEnum):
     USER_PROVISIONED = "user.provisioned"
     USER_SUSPENDED = "user.suspended"
@@ -40,3 +44,5 @@ class AuditAction(StrEnum):
     ACCESS_REQUEST_CREATED = "access_request.created"
     ACCESS_REQUEST_APPROVED = "access_request.approved"
     ACCESS_REQUEST_DENIED = "access_request.denied"
+    MEDIA_UPLOADED = "media.uploaded"
+    MEDIA_DELETED = "media.deleted"

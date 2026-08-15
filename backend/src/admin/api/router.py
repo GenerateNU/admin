@@ -4,6 +4,7 @@ from admin.api.v1 import (
     access_requests,
     health,
     invitations,
+    media,
     members,
     roles,
     session,
@@ -15,6 +16,7 @@ api_router.include_router(members.router)
 api_router.include_router(invitations.router)
 api_router.include_router(access_requests.router)
 api_router.include_router(roles.router)
+api_router.include_router(media.router)
 
 root_router = APIRouter()
 root_router.include_router(health.router)
