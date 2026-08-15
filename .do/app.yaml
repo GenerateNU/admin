@@ -1,0 +1,107 @@
+name: generate-admin
+region: nyc
+
+databases:
+  - name: db
+    engine: PG
+    version: "17"
+    production: true
+    cluster_name: generate-admin-db
+
+services:
+  - name: api
+    github:
+      repo: GenerateNU/admin
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    dockerfile_path: backend/Dockerfile
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    http_port: 8080
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 15
+      period_seconds: 10
+    envs:
+      # Composed from components rather than ${db.DATABASE_URL}, which hands back a bare
+      # postgresql:// scheme. alembic/env.py rewrites postgresql+asyncpg:// -> +psycopg, so a
+      # bare scheme silently falls through to the psycopg2 dialect, which isn't installed.
+      - key: DATABASE_URL
+        scope: RUN_AND_BUILD_TIME
+        value: postgresql+asyncpg://${db.USERNAME}:${db.PASSWORD}@${db.HOSTNAME}:${db.PORT}/${db.DATABASE}?sslmode=require
+      - key: APP_ENVIRONMENT
+        scope: RUN_AND_BUILD_TIME
+        value: production
+      - key: APP_LOG_LEVEL
+        scope: RUN_AND_BUILD_TIME
+        value: INFO
+      - key: ENTRA_TENANT_ID
+        scope: RUN_AND_BUILD_TIME
+        value: a8eec281-aaa3-4dae-ac9b-9a398b9215e7
+      - key: ENTRA_API_CLIENT_ID
+        scope: RUN_AND_BUILD_TIME
+        value: 6b24d4eb-4d4c-44c5-8252-cf13aa888eca
+      - key: CORS_ALLOWED_ORIGINS
+        scope: RUN_AND_BUILD_TIME
+        value: ${APP_URL}
+      - key: INITIAL_OWNER_EMAIL
+        scope: RUN_AND_BUILD_TIME
+        value: nguyen.mai4@northeastern.edu
+      # Upstash: rediss:// (two s) — TLS is required and the scheme carries it.
+      - key: REDIS_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: CHANGE_ME
+      - key: AWS_ACCESS_KEY_ID
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: CHANGE_ME
+      - key: AWS_SECRET_ACCESS_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: CHANGE_ME
+      - key: AWS_REGION
+        scope: RUN_AND_BUILD_TIME
+        value: us-east-1
+      # Empty S3_ENDPOINT makes boto3 talk to real AWS instead of LocalStack.
+      - key: S3_ENDPOINT
+        scope: RUN_AND_BUILD_TIME
+        value: ""
+      - key: S3_BUCKET_NAME
+        scope: RUN_AND_BUILD_TIME
+        value: generate-admin
+      - key: S3_PUBLIC_BASE_URL
+        scope: RUN_AND_BUILD_TIME
+        value: https://generate-admin.s3.us-east-1.amazonaws.com
+
+jobs:
+  # Runs after build, before the new revision takes traffic. A failure here aborts the deploy,
+  # which is what you want: better to keep serving old code than to half-migrate.
+  - name: migrate
+    kind: PRE_DEPLOY
+    github:
+      repo: GenerateNU/admin
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    dockerfile_path: backend/Dockerfile
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    run_command: alembic upgrade head
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_AND_BUILD_TIME
+        value: postgresql+asyncpg://${db.USERNAME}:${db.PASSWORD}@${db.HOSTNAME}:${db.PORT}/${db.DATABASE}?sslmode=require
+      - key: APP_ENVIRONMENT
+        scope: RUN_AND_BUILD_TIME
+        value: production
+      - key: ENTRA_TENANT_ID
+        scope: RUN_AND_BUILD_TIME
+        value: a8eec281-aaa3-4dae-ac9b-9a398b9215e7
+      - key: ENTRA_API_CLIENT_ID
+        scope: RUN_AND_BUILD_TIME
+        value: 6b24d4eb-4d4c-44c5-8252-cf13aa888eca
+      - key: REDIS_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: CHANGE_ME

@@ -5,6 +5,7 @@ from typing import Any, Protocol
 
 from pydantic import TypeAdapter
 from redis.asyncio import Redis
+from redis.exceptions import RedisError
 
 from admin.core.logging import get_logger
 
@@ -66,7 +67,12 @@ class RedisCache:
         return int(raw) if raw else 0
 
     async def bump(self, namespace: CacheNamespace) -> None:
-        await self._client.incr(self._version_key(namespace))
+        # A dropped bump leaves stale entries readable until their TTL expires. That is a worse
+        # failure than a dropped read, so it is logged at warning rather than swallowed quietly.
+        try:
+            await self._client.incr(self._version_key(namespace))
+        except RedisError as error:
+            logger.warning("cache_bump_failed", namespace=namespace.value, error=str(error))
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -80,25 +86,43 @@ class RedisCache:
         adapter: TypeAdapter[Any],
         ttl: float | None = None,
     ) -> Any:
-        version = await self.version(namespace)
-        qualified = f"{KEY_PREFIX}:{namespace.value}:v{version}:{key}"
+        # Redis is a cache, not a source of truth: every value here can be rebuilt by the loader.
+        # So a Redis outage degrades latency instead of failing the request. Errors are handled
+        # per operation rather than by swapping in a null cache, which means the cache starts
+        # working again on its own once Redis comes back.
+        try:
+            version = await self.version(namespace)
+            qualified = f"{KEY_PREFIX}:{namespace.value}:v{version}:{key}"
+            cached = await self._client.get(qualified)
+        except RedisError as error:
+            logger.warning("cache_read_failed", namespace=namespace.value, error=str(error))
+            return await loader()
 
-        cached = await self._client.get(qualified)
         if cached is not None:
             return adapter.validate_json(cached)
 
         lock = await self._flight.lock_for(qualified)
         async with lock:
-            cached = await self._client.get(qualified)
+            try:
+                cached = await self._client.get(qualified)
+            except RedisError as error:
+                logger.warning("cache_read_failed", namespace=namespace.value, error=str(error))
+                return await loader()
+
             if cached is not None:
                 return adapter.validate_json(cached)
 
             value = await loader()
-            await self._client.set(
-                qualified,
-                adapter.dump_json(value),
-                ex=int(ttl or self._default_ttl),
-            )
+
+            try:
+                await self._client.set(
+                    qualified,
+                    adapter.dump_json(value),
+                    ex=int(ttl or self._default_ttl),
+                )
+            except RedisError as error:
+                logger.warning("cache_write_failed", namespace=namespace.value, error=str(error))
+
             return value
 
 
@@ -109,9 +133,10 @@ async def build_cache(redis_url: str, *, default_ttl: float = DEFAULT_TTL_SECOND
     client: Redis = Redis.from_url(redis_url, decode_responses=False)
     try:
         await client.ping()
-    except Exception as error:
-        await client.aclose()
-        raise RuntimeError(f"could not connect to redis at {redis_url}") from error
+        logger.info("cache_redis", url=redis_url)
+    except RedisError as error:
+        # Deliberately not fatal. Booting without a reachable cache is a slow API; refusing to
+        # boot is an outage. RedisCache degrades per call and recovers once Redis is back.
+        logger.warning("cache_redis_unreachable", url=redis_url, error=str(error))
 
-    logger.info("cache_redis", url=redis_url)
     return RedisCache(client, default_ttl=default_ttl)

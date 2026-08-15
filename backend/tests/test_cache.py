@@ -61,6 +61,45 @@ async def test_concurrent_misses_run_the_loader_once(cache: Cache) -> None:
     assert calls == 1
 
 
+async def test_unreachable_redis_still_builds_a_cache() -> None:
+    """Booting without a reachable cache is slow; refusing to boot is an outage."""
+    unreachable = await build_cache("redis://127.0.0.1:1/0")
+    assert unreachable is not None
+    await unreachable.close()
+
+
+async def test_fetch_falls_back_to_the_loader_when_redis_is_down() -> None:
+    unreachable = await build_cache("redis://127.0.0.1:1/0")
+    calls = 0
+
+    async def loader() -> str:
+        nonlocal calls
+        calls += 1
+        return "value"
+
+    try:
+        first = await unreachable.fetch(
+            CacheNamespace.CONTENT, unique_key(), loader, adapter=STRING_ADAPTER
+        )
+        second = await unreachable.fetch(
+            CacheNamespace.CONTENT, unique_key(), loader, adapter=STRING_ADAPTER
+        )
+    finally:
+        await unreachable.close()
+
+    # Every call recomputes, but nothing raises.
+    assert first == second == "value"
+    assert calls == 2
+
+
+async def test_bump_does_not_raise_when_redis_is_down() -> None:
+    unreachable = await build_cache("redis://127.0.0.1:1/0")
+    try:
+        await unreachable.bump(CacheNamespace.ROLES)
+    finally:
+        await unreachable.close()
+
+
 async def test_bump_invalidates_the_whole_namespace(cache: Cache) -> None:
     key = unique_key()
     calls = 0

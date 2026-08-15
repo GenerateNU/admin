@@ -5,6 +5,7 @@
 - [uv](https://docs.astral.sh/uv/) (Python 3.12+)
 - Docker, for Postgres / Redis / LocalStack
 - [just](https://github.com/casey/just)
+- Node 22+, for the frontend (orval requires >= 22.18); `nvm use` picks it up from `.nvmrc`
 
 ## Quickstart
 
@@ -61,3 +62,4 @@ uses a real Redis.
 - test: Postgres and Redis service containers, migrations, then pytest
 
 It mirrors `just check`.
+
