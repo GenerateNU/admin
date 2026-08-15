@@ -6,6 +6,7 @@ import asyncpg
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from admin.core.audit import AuditLog
 from admin.core.cache import Cache as CacheProtocol
 from admin.core.config import Settings, get_settings
 from admin.core.errors import (
@@ -22,6 +23,7 @@ from admin.repositories import (
     AccessRequestRepository,
     AuditRepository,
     InvitationRepository,
+    MediaRepository,
     RoleRepository,
     UserRepository,
 )
@@ -30,6 +32,7 @@ from admin.schemas.user import UserRead
 from admin.services.access import AccessService
 from admin.services.access_request import AccessRequestService
 from admin.services.invitation import InvitationService
+from admin.services.media import MediaService
 from admin.services.member import MemberService
 
 bearer_scheme = HTTPBearer(auto_error=True)
@@ -91,11 +94,24 @@ def get_audit_repository(connection: Connection) -> AuditRepository:
     return AuditRepository(connection)
 
 
+async def get_audit_log(connection: Connection) -> AsyncIterator[AuditLog]:
+    log = AuditLog()
+    yield log
+    if log.entries:
+        await AuditRepository(connection).record_many(log.entries)
+
+
+def get_media_repository(connection: Connection) -> MediaRepository:
+    return MediaRepository(connection)
+
+
 Users = Annotated[UserRepository, Depends(get_user_repository)]
 Roles = Annotated[RoleRepository, Depends(get_role_repository)]
 Invitations = Annotated[InvitationRepository, Depends(get_invitation_repository)]
 AccessRequests = Annotated[AccessRequestRepository, Depends(get_access_request_repository)]
-Audit = Annotated[AuditRepository, Depends(get_audit_repository)]
+Audit = Annotated[AuditLog, Depends(get_audit_log)]
+AuditEntries = Annotated[AuditRepository, Depends(get_audit_repository)]
+Media = Annotated[MediaRepository, Depends(get_media_repository)]
 
 
 def get_access_service(
@@ -138,10 +154,15 @@ def get_access_request_service(
     )
 
 
+def get_media_service(media: Media, storage: Storage, audit: Audit) -> MediaService:
+    return MediaService(media=media, storage=storage, audit=audit)
+
+
 AccessServiceDep = Annotated[AccessService, Depends(get_access_service)]
 MemberServiceDep = Annotated[MemberService, Depends(get_member_service)]
 InvitationServiceDep = Annotated[InvitationService, Depends(get_invitation_service)]
 AccessRequestServiceDep = Annotated[AccessRequestService, Depends(get_access_request_service)]
+MediaServiceDep = Annotated[MediaService, Depends(get_media_service)]
 
 
 async def get_identity(
