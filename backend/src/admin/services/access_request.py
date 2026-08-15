@@ -1,10 +1,10 @@
 import uuid
 
+from admin.core.audit import AuditLog
 from admin.core.errors import ConflictError, NotFoundError, ValidationError
 from admin.domain.access import PermissionSet
 from admin.domain.enums import AccessRequestStatus, AuditAction
 from admin.repositories.access_request import AccessRequestRepository
-from admin.repositories.audit import AuditRepository
 from admin.repositories.role import RoleRepository
 from admin.repositories.user import UserRepository
 from admin.schemas.access_request import (
@@ -26,7 +26,7 @@ class AccessRequestService:
         access_requests: AccessRequestRepository,
         users: UserRepository,
         roles: RoleRepository,
-        audit: AuditRepository,
+        audit: AuditLog,
     ) -> None:
         self._access_requests = access_requests
         self._users = users
@@ -50,7 +50,7 @@ class AccessRequestService:
             message=payload.message,
         )
 
-        await self._audit.record(
+        self._audit.add(
             AuditEntry(
                 actor_email=identity.email,
                 action=AuditAction.ACCESS_REQUEST_CREATED,
@@ -108,7 +108,7 @@ class AccessRequestService:
         if decided is None:
             raise ValidationError("access request has already been reviewed")
 
-        await self._audit.record(
+        self._audit.add(
             AuditEntry(
                 actor_id=actor.id,
                 actor_email=actor.email,
@@ -132,7 +132,7 @@ class AccessRequestService:
         if decided is None:
             raise NotFoundError("no pending access request with that id")
 
-        await self._audit.record(
+        self._audit.add(
             AuditEntry(
                 actor_id=actor.id,
                 actor_email=actor.email,

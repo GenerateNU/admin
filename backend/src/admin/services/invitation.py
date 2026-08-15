@@ -3,10 +3,10 @@ import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 
+from admin.core.audit import AuditLog
 from admin.core.errors import ConflictError, NotFoundError, ValidationError
 from admin.domain.access import PermissionSet
 from admin.domain.enums import AuditAction
-from admin.repositories.audit import AuditRepository
 from admin.repositories.invitation import InvitationRepository
 from admin.repositories.role import RoleRepository
 from admin.repositories.user import UserRepository
@@ -30,7 +30,7 @@ class InvitationService:
         invitations: InvitationRepository,
         roles: RoleRepository,
         users: UserRepository,
-        audit: AuditRepository,
+        audit: AuditLog,
         default_ttl_hours: int,
     ) -> None:
         self._invitations = invitations
@@ -72,7 +72,7 @@ class InvitationService:
             expires_at=expires_at,
         )
 
-        await self._audit.record(
+        self._audit.add(
             AuditEntry(
                 actor_id=actor.id,
                 actor_email=actor.email,
@@ -96,7 +96,7 @@ class InvitationService:
         if not await self._invitations.revoke(invitation_id):
             raise ValidationError("invitation is already accepted or revoked")
 
-        await self._audit.record(
+        self._audit.add(
             AuditEntry(
                 actor_id=actor.id,
                 actor_email=actor.email,

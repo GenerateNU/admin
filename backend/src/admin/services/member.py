@@ -1,9 +1,9 @@
 import uuid
 
+from admin.core.audit import AuditLog
 from admin.core.errors import NotFoundError
 from admin.domain.access import PermissionSet
 from admin.domain.enums import AuditAction
-from admin.repositories.audit import AuditRepository
 from admin.repositories.role import RoleRepository
 from admin.repositories.user import UserRepository
 from admin.schemas.audit import AuditEntry
@@ -18,7 +18,7 @@ class MemberService:
         *,
         users: UserRepository,
         roles: RoleRepository,
-        audit: AuditRepository,
+        audit: AuditLog,
     ) -> None:
         self._users = users
         self._roles = roles
@@ -55,7 +55,7 @@ class MemberService:
             expires_at=payload.expires_at,
         )
 
-        await self._audit.record(
+        self._audit.add(
             AuditEntry(
                 actor_id=actor.id,
                 actor_email=actor.email,
@@ -85,7 +85,7 @@ class MemberService:
         await ensure_not_last_owner(self._users, assignment.role.key)
         await self._roles.revoke(assignment_id)
 
-        await self._audit.record(
+        self._audit.add(
             AuditEntry(
                 actor_id=actor.id,
                 actor_email=actor.email,

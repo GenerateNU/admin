@@ -12,23 +12,6 @@ before, after, created_at
 
 
 class AuditRepository(Repository):
-    async def record(self, entry: AuditEntry) -> None:
-        await self.connection.execute(
-            """
-            INSERT INTO audit_logs
-                (actor_id, actor_email, action, resource_type, resource_id,
-                 before, after)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            """,
-            entry.actor_id,
-            entry.actor_email,
-            entry.action.value,
-            entry.resource_type,
-            entry.resource_id,
-            entry.before,
-            entry.after,
-        )
-
     async def record_many(self, entries: list[AuditEntry]) -> None:
         if not entries:
             return

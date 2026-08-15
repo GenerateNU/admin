@@ -1,3 +1,4 @@
+from admin.core.audit import AuditLog
 from admin.domain.access import PermissionSet, ResolvedAccess
 from admin.domain.enums import (
     AccessRequestStatus,
@@ -6,7 +7,6 @@ from admin.domain.enums import (
     UserStatus,
 )
 from admin.repositories.access_request import AccessRequestRepository
-from admin.repositories.audit import AuditRepository
 from admin.repositories.invitation import InvitationRepository
 from admin.repositories.role import RoleRepository
 from admin.repositories.user import UserRepository
@@ -24,7 +24,7 @@ class AccessService:
         invitations: InvitationRepository,
         access_requests: AccessRequestRepository,
         roles: RoleRepository,
-        audit: AuditRepository,
+        audit: AuditLog,
     ) -> None:
         self._users = users
         self._invitations = invitations
@@ -99,24 +99,22 @@ class AccessService:
         )
         await self._invitations.mark_accepted(invitation.id)
 
-        await self._audit.record_many(
-            [
-                AuditEntry(
-                    actor_id=user.id,
-                    actor_email=user.email,
-                    action=AuditAction.INVITATION_ACCEPTED,
-                    resource_type="invitation",
-                    resource_id=str(invitation.id),
-                    after={"user_id": str(user.id), "role_key": invitation.role.key},
-                ),
-                AuditEntry(
-                    actor_id=user.id,
-                    actor_email=user.email,
-                    action=AuditAction.USER_PROVISIONED,
-                    resource_type="user",
-                    resource_id=str(user.id),
-                    after={"email": user.email, "source": "invitation"},
-                ),
-            ]
+        self._audit.add(
+            AuditEntry(
+                actor_id=user.id,
+                actor_email=user.email,
+                action=AuditAction.INVITATION_ACCEPTED,
+                resource_type="invitation",
+                resource_id=str(invitation.id),
+                after={"user_id": str(user.id), "role_key": invitation.role.key},
+            ),
+            AuditEntry(
+                actor_id=user.id,
+                actor_email=user.email,
+                action=AuditAction.USER_PROVISIONED,
+                resource_type="user",
+                resource_id=str(user.id),
+                after={"email": user.email, "source": "invitation"},
+            ),
         )
         return user

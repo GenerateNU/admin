@@ -1,13 +1,13 @@
 import asyncio
 import uuid
 
+from admin.core.audit import AuditLog
 from admin.core.errors import NotFoundError, ValidationError
 from admin.core.logging import get_logger
 from admin.core.storage import MediaUrl, S3Storage, build_object_key
 from admin.domain.access import PermissionSet
 from admin.domain.enums import AuditAction
 from admin.domain.media import PRESETS, preset_for
-from admin.repositories.audit import AuditRepository
 from admin.repositories.media import MediaRepository
 from admin.schemas.audit import AuditEntry
 from admin.schemas.media import (
@@ -28,9 +28,7 @@ RESOURCE_TYPE = "media"
 
 
 class MediaService:
-    def __init__(
-        self, *, media: MediaRepository, storage: S3Storage, audit: AuditRepository
-    ) -> None:
+    def __init__(self, *, media: MediaRepository, storage: S3Storage, audit: AuditLog) -> None:
         self._media = media
         self._storage = storage
         self._audit = audit
@@ -112,7 +110,7 @@ class MediaService:
         if updated is None:
             raise NotFoundError("media does not exist")
 
-        await self._audit.record(
+        self._audit.add(
             AuditEntry(
                 actor_id=actor.id,
                 actor_email=actor.email,
@@ -169,8 +167,8 @@ class MediaService:
         variant_keys = await self._media.variant_keys_for(media_ids)
         deleted = await self._media.delete_by_ids(media_ids)
 
-        await self._audit.record_many(
-            [
+        self._audit.add(
+            *(
                 AuditEntry(
                     actor_id=actor.id,
                     actor_email=actor.email,
@@ -184,7 +182,7 @@ class MediaService:
                     },
                 )
                 for record in deleted
-            ]
+            )
         )
 
         keys = [record.s3_key for record in deleted] + variant_keys
