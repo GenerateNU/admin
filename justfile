@@ -41,16 +41,24 @@ revision message:
 seed:
     cd {{backend}} && uv run python -m admin.cli seed
 
-# Dump the OpenAPI schema to ./openapi.json. No server, no database.
+invite *args:
+    cd {{backend}} && uv run python -m admin.cli invite {{args}}
+
 openapi:
     cd {{backend}} && uv run python -m admin.cli openapi
 
-# Regenerate the typed client from the committed schema.
 gen: openapi
     npm run gen
 
 test:
     cd {{backend}} && uv run pytest
+
+docker-test:
+    docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from backend-test
+    docker compose -f docker-compose.test.yml down -v
+
+docker-build:
+    docker build --target runtime -t generate-admin-backend {{backend}}
 
 lint:
     cd {{backend}} && uv run ruff check . && uv run ruff format --check .
@@ -62,3 +70,15 @@ typecheck:
     cd {{backend}} && uv run mypy src
 
 check: lint typecheck test
+
+frontend-install:
+    npm install
+
+frontend-dev:
+    npm run dev --workspace frontend
+
+frontend-build:
+    npm run build --workspace frontend
+
+frontend-lint:
+    npm run lint --workspace frontend

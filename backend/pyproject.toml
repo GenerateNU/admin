@@ -53,7 +53,6 @@ plugins = ["pydantic.mypy"]
 strict = true
 warn_return_any = false
 
-# These ship without type stubs; everything else stays strict.
 [[tool.mypy.overrides]]
 module = ["asyncpg.*", "boto3.*", "botocore.*"]
 ignore_missing_imports = true

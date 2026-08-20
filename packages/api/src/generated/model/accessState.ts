@@ -11,6 +11,7 @@ export type AccessState = typeof AccessState[keyof typeof AccessState];
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const AccessState = {
   no_access: 'no_access',
+  invited: 'invited',
   pending: 'pending',
   denied: 'denied',
   active: 'active',

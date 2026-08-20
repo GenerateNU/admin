@@ -21,6 +21,8 @@ just dev                 # http://localhost:8000
 
 Check it with `curl localhost:8000/health`. API docs are at `/docs`.
 
+For the Next.js admin console, see [`frontend/README.md`](frontend/README.md).
+
 ## Services
 
 Docker compose uses offset host ports so it does not collide with anything already running.

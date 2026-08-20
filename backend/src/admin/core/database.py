@@ -6,9 +6,6 @@ import asyncpg
 
 from admin.core.config import DatabaseConfig
 
-# Pool.acquire() yields a PoolConnectionProxy, which forwards to Connection at runtime via
-# metaclass delegation but is not a subclass of it. Anything that just runs queries should
-# accept either.
 type DBConnection = asyncpg.Connection | asyncpg.pool.PoolConnectionProxy
 
 ASYNCPG_SCHEME = "postgresql://"

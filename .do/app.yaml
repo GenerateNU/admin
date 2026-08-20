@@ -24,9 +24,6 @@ services:
       initial_delay_seconds: 15
       period_seconds: 10
     envs:
-      # Composed from components rather than ${db.DATABASE_URL}, which hands back a bare
-      # postgresql:// scheme. alembic/env.py rewrites postgresql+asyncpg:// -> +psycopg, so a
-      # bare scheme silently falls through to the psycopg2 dialect, which isn't installed.
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME
         value: postgresql+asyncpg://${db.USERNAME}:${db.PASSWORD}@${db.HOSTNAME}:${db.PORT}/${db.DATABASE}?sslmode=require
@@ -48,7 +45,6 @@ services:
       - key: INITIAL_OWNER_EMAIL
         scope: RUN_AND_BUILD_TIME
         value: nguyen.mai4@northeastern.edu
-      # Upstash: rediss:// (two s) — TLS is required and the scheme carries it.
       - key: REDIS_URL
         scope: RUN_AND_BUILD_TIME
         type: SECRET
@@ -64,7 +60,6 @@ services:
       - key: AWS_REGION
         scope: RUN_AND_BUILD_TIME
         value: us-east-1
-      # Empty S3_ENDPOINT makes boto3 talk to real AWS instead of LocalStack.
       - key: S3_ENDPOINT
         scope: RUN_AND_BUILD_TIME
         value: ""
@@ -76,8 +71,6 @@ services:
         value: https://generate-admin.s3.us-east-1.amazonaws.com
 
 jobs:
-  # Runs after build, before the new revision takes traffic. A failure here aborts the deploy,
-  # which is what you want: better to keep serving old code than to half-migrate.
   - name: migrate
     kind: PRE_DEPLOY
     github:

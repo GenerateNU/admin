@@ -11,6 +11,6 @@
   "scripts": {
     "dev": "npm run dev --workspace frontend",
     "build": "npm run build --workspace frontend",
-    "gen": "npm run gen --workspace @generate-admin/api"
+    "gen": "npm run gen --workspace @generatenu/api"
   }
 }

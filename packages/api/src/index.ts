@@ -8,4 +8,4 @@ export * from "./generated/access-requests/access-requests";
 export * from "./generated/audit/audit";
 export * from "./generated/media/media";
 export * from "./generated/health/health";
-export type * from "./generated/model";
+export * from "./generated/model";

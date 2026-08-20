@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './acceptInvitation';
 export * from './accessRequestApproval';
 export * from './accessRequestApprovalExpiresAt';
 export * from './accessRequestApprovalNote';

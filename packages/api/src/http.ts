@@ -1,10 +1,3 @@
-/**
- * The single seam every generated hook goes through.
- *
- * Auth is injected rather than baked in, so the same generated client serves both
- * the admin UI (which supplies an MSAL token) and the public website (which does not).
- */
-
 type TokenProvider = () => Promise<string | null>;
 
 let baseUrl = "";
@@ -41,8 +34,6 @@ export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promi
   const response = await fetch(`${baseUrl}${url}`, { ...options, headers });
 
   if (!response.ok) {
-    // The backend's DomainError handler returns {code, message, details}; fall back for
-    // anything that doesn't (502s from a proxy, FastAPI's own validation errors).
     const body = await response.json().catch(() => null);
     throw new ApiError(
       response.status,
@@ -52,5 +43,6 @@ export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promi
     );
   }
 
-  return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
+  const data = response.status === 204 ? undefined : await response.json();
+  return { data, status: response.status, headers: response.headers } as T;
 };

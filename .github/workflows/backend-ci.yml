@@ -78,53 +78,14 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: generate_admin
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d generate_admin"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 10
-
-    env:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/generate_admin
-      REDIS_URL: redis://127.0.0.1:6379/0
-      APP_ENVIRONMENT: local
-
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: backend/uv.lock
+      - name: Run tests
+        run: |
+          docker compose -f docker-compose.test.yml up --build \
+            --abort-on-container-exit --exit-code-from backend-test
 
-      - name: Install dependencies
-        run: uv sync --all-groups
-
-      - name: Run migrations
-        run: uv run alembic upgrade head
-
-      - name: Pytest
-        run: uv run pytest
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v

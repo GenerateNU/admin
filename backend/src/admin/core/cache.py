@@ -67,8 +67,6 @@ class RedisCache:
         return int(raw) if raw else 0
 
     async def bump(self, namespace: CacheNamespace) -> None:
-        # A dropped bump leaves stale entries readable until their TTL expires. That is a worse
-        # failure than a dropped read, so it is logged at warning rather than swallowed quietly.
         try:
             await self._client.incr(self._version_key(namespace))
         except RedisError as error:
@@ -86,10 +84,6 @@ class RedisCache:
         adapter: TypeAdapter[Any],
         ttl: float | None = None,
     ) -> Any:
-        # Redis is a cache, not a source of truth: every value here can be rebuilt by the loader.
-        # So a Redis outage degrades latency instead of failing the request. Errors are handled
-        # per operation rather than by swapping in a null cache, which means the cache starts
-        # working again on its own once Redis comes back.
         try:
             version = await self.version(namespace)
             qualified = f"{KEY_PREFIX}:{namespace.value}:v{version}:{key}"
@@ -135,8 +129,6 @@ async def build_cache(redis_url: str, *, default_ttl: float = DEFAULT_TTL_SECOND
         await client.ping()
         logger.info("cache_redis", url=redis_url)
     except RedisError as error:
-        # Deliberately not fatal. Booting without a reachable cache is a slow API; refusing to
-        # boot is an outage. RedisCache degrades per call and recovers once Redis is back.
         logger.warning("cache_redis_unreachable", url=redis_url, error=str(error))
 
     return RedisCache(client, default_ttl=default_ttl)

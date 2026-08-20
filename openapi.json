@@ -52,6 +52,52 @@
         ]
       }
     },
+    "/api/v1/session/accept-invitation": {
+      "post": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Accept Invitation",
+        "operationId": "acceptInvitation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInvitation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/session/access-request": {
       "post": {
         "tags": [
@@ -1003,6 +1049,21 @@
   },
   "components": {
     "schemas": {
+      "AcceptInvitation": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Token"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "AcceptInvitation"
+      },
       "AccessRequestApproval": {
         "properties": {
           "role_id": {
@@ -1184,6 +1245,7 @@
         "type": "string",
         "enum": [
           "no_access",
+          "invited",
           "pending",
           "denied",
           "active",

@@ -24,6 +24,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AcceptInvitation,
   AccessRequestCreate,
   AccessRequestRead,
   HTTPValidationError,
@@ -150,6 +151,96 @@ export function useReadSession<TData = Awaited<ReturnType<typeof readSession>>, 
 
 
 /**
+ * @summary Accept Invitation
+ */
+export type acceptInvitationResponse200 = {
+  data: Session
+  status: 200
+}
+
+export type acceptInvitationResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+    
+export type acceptInvitationResponseSuccess = (acceptInvitationResponse200) & {
+  headers: Headers;
+};
+export type acceptInvitationResponseError = (acceptInvitationResponse422) & {
+  headers: Headers;
+};
+
+export type acceptInvitationResponse = (acceptInvitationResponseSuccess | acceptInvitationResponseError)
+
+export const getAcceptInvitationUrl = () => {
+
+
+  
+
+  return `/api/v1/session/accept-invitation`
+}
+
+export const acceptInvitation = async (acceptInvitation: AcceptInvitation, options?: RequestInit): Promise<acceptInvitationResponse> => {
+  
+  return apiFetch<acceptInvitationResponse>(getAcceptInvitationUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      acceptInvitation,)
+  }
+);}
+
+
+
+
+export const getAcceptInvitationMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: AcceptInvitation}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: AcceptInvitation}, TContext> => {
+
+const mutationKey = ['acceptInvitation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvitation>>, {data: AcceptInvitation}> = (props) => {
+          const {data} = props ?? {};
+
+          return  acceptInvitation(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcceptInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvitation>>>
+    export type AcceptInvitationMutationBody = AcceptInvitation
+    export type AcceptInvitationMutationError = HTTPValidationError
+
+    /**
+ * @summary Accept Invitation
+ */
+export const useAcceptInvitation = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: AcceptInvitation}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof acceptInvitation>>,
+        TError,
+        {data: AcceptInvitation},
+        TContext
+      > => {
+
+      const mutationOptions = getAcceptInvitationMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Request Access
  */
 export type requestAccessResponse201 = {
