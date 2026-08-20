@@ -11,4 +11,5 @@ export type MediaPurpose = typeof MediaPurpose[keyof typeof MediaPurpose];
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const MediaPurpose = {
   avatar: 'avatar',
+  branch_icon: 'branch_icon',
 } as const;
