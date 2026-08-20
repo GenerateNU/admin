@@ -31,6 +31,7 @@ class AccessRequestStatus(StrEnum):
 
 class MediaPurpose(StrEnum):
     AVATAR = "avatar"
+    BRANCH_ICON = "branch_icon"
 
 
 class AuditAction(StrEnum):
@@ -47,3 +48,9 @@ class AuditAction(StrEnum):
     ACCESS_REQUEST_DENIED = "access_request.denied"
     MEDIA_UPLOADED = "media.uploaded"
     MEDIA_DELETED = "media.deleted"
+    BRANCH_DRAFT_CREATED = "branch_draft.created"
+    BRANCH_DRAFT_UPDATED = "branch_draft.updated"
+    BRANCH_DRAFT_DELETED = "branch_draft.deleted"
+    BRANCH_DRAFTS_REORDERED = "branch_draft.reordered"
+    BRANCHES_PUBLISHED = "branches.published"
+    BRANCHES_DISCARDED = "branches.discarded"

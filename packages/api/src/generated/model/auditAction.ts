@@ -23,4 +23,10 @@ export const AuditAction = {
   access_requestdenied: 'access_request.denied',
   mediauploaded: 'media.uploaded',
   mediadeleted: 'media.deleted',
+  branch_draftcreated: 'branch_draft.created',
+  branch_draftupdated: 'branch_draft.updated',
+  branch_draftdeleted: 'branch_draft.deleted',
+  branch_draftreordered: 'branch_draft.reordered',
+  branchespublished: 'branches.published',
+  branchesdiscarded: 'branches.discarded',
 } as const;
