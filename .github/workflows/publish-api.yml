@@ -37,7 +37,7 @@ jobs:
         run: npm ci
 
       - name: Set package version
-        run: npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --workspace @generatenu/api
+        run: npm pkg set version="${{ steps.version.outputs.value }}" --workspace @generatenu/api
 
       - name: Build
         run: npm run build --workspace @generatenu/api
