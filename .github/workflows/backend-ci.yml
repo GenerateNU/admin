@@ -39,6 +39,42 @@ jobs:
       - name: Mypy
         run: uv run mypy src
 
+  contract:
+    name: api contract
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+asyncpg://unused:unused@127.0.0.1:5432/unused
+      REDIS_URL: redis://127.0.0.1:6379/0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-groups --directory backend
+          npm ci
+
+      - name: Regenerate schema and client
+        run: |
+          uv run --directory backend python -m admin.cli openapi
+          npm run gen
+
+      - name: Fail if the committed output is stale
+        run: |
+          if ! git diff --exit-code -- openapi.json packages/api/src/generated; then
+            echo "::error::openapi.json or the generated client is out of date. Run 'just gen' and commit."
+            exit 1
+          fi
+
   test:
     name: test
     runs-on: ubuntu-latest
@@ -72,8 +108,6 @@ jobs:
           --health-retries 10
 
     env:
-      # Ports are the container defaults here, not the offset ones docker-compose
-      # publishes locally. Everything else falls back to its config default.
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/generate_admin
       REDIS_URL: redis://127.0.0.1:6379/0
       APP_ENVIRONMENT: local

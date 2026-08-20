@@ -42,6 +42,8 @@ Docker compose uses offset host ports so it does not collide with anything alrea
 | `just rollback`    | undo the last migration          |
 | `just revision <name>`  | create a migration               |
 | `just seed`        | sync roles and permissions       |
+| `just openapi`     | write `openapi.json` (no server) |
+| `just gen`         | `openapi` + regenerate the TS client |
 | `just test`        | pytest                           |
 | `just lint`        | ruff check + format check        |
 | `just fmt`         | ruff autofix + format            |

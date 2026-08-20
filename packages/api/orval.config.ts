@@ -2,8 +2,9 @@ import { defineConfig } from "orval";
 
 export default defineConfig({
   admin: {
-    // Reads the live schema, so the backend needs to be running when you `npm run gen`.
-    input: { target: "http://localhost:8000/openapi.json" },
+    // The committed schema, not a live server: `just openapi` regenerates it without booting
+    // anything, and a second repo can point orval at this same file over a raw GitHub URL.
+    input: { target: "../../openapi.json" },
     output: {
       mode: "tags-split",
       target: "./src/generated/endpoints.ts",

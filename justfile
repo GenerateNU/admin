@@ -41,6 +41,14 @@ revision message:
 seed:
     cd {{backend}} && uv run python -m admin.cli seed
 
+# Dump the OpenAPI schema to ./openapi.json. No server, no database.
+openapi:
+    cd {{backend}} && uv run python -m admin.cli openapi
+
+# Regenerate the typed client from the committed schema.
+gen: openapi
+    npm run gen
+
 test:
     cd {{backend}} && uv run pytest
 

@@ -1,5 +1,7 @@
 import asyncio
+import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import typer
 
@@ -129,6 +131,23 @@ async def _seed() -> None:
 @app.command()
 def seed() -> None:
     asyncio.run(_seed())
+
+
+@app.command()
+def openapi(output: Path = Path("../openapi.json")) -> None:
+    """Write the OpenAPI schema to disk.
+
+    Deliberately does not boot the server: FastAPI can produce the schema from the route table
+    alone, so codegen works offline and in CI without Postgres or Redis. Output is stable across
+    runs because the route table and Pydantic field order are, which is what the CI drift check
+    relies on; keys are left in declaration order rather than sorted so the generated types read
+    like the models they came from.
+    """
+    from admin.main import create_app
+
+    schema = create_app().openapi()
+    output.write_text(json.dumps(schema, indent=2) + "\n")
+    print(f"wrote {output}")
 
 
 if __name__ == "__main__":
