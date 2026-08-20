@@ -8,6 +8,7 @@ class UserStatus(StrEnum):
 
 class AccessState(StrEnum):
     NO_ACCESS = "no_access"
+    INVITED = "invited"
     PENDING = "pending"
     DENIED = "denied"
     ACTIVE = "active"

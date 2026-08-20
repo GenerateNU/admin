@@ -9,6 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from admin.core.audit import AuditLog
 from admin.core.cache import Cache as CacheProtocol
 from admin.core.config import Settings, get_settings
+from admin.core.email import EmailSender as EmailSenderProtocol
 from admin.core.errors import (
     AccountNotProvisionedError,
     AccountSuspendedError,
@@ -64,6 +65,10 @@ def get_storage(request: Request) -> S3Storage:
     return request.app.state.storage
 
 
+def get_email_sender(request: Request) -> EmailSenderProtocol:
+    return request.app.state.email_sender
+
+
 def get_token_verifier(request: Request) -> TokenVerifier:
     return request.app.state.token_verifier
 
@@ -71,6 +76,7 @@ def get_token_verifier(request: Request) -> TokenVerifier:
 Connection = Annotated[asyncpg.Connection, Depends(get_connection)]
 Cache = Annotated[CacheProtocol, Depends(get_read_cache)]
 Storage = Annotated[S3Storage, Depends(get_storage)]
+EmailSender = Annotated[EmailSenderProtocol, Depends(get_email_sender)]
 AppSettings = Annotated[Settings, Depends(get_settings)]
 
 
@@ -135,14 +141,21 @@ def get_member_service(users: Users, roles: Roles, audit: Audit) -> MemberServic
 
 
 def get_invitation_service(
-    invitations: Invitations, roles: Roles, users: Users, audit: Audit, settings: AppSettings
+    invitations: Invitations,
+    roles: Roles,
+    users: Users,
+    audit: Audit,
+    email_sender: EmailSender,
+    settings: AppSettings,
 ) -> InvitationService:
     return InvitationService(
         invitations=invitations,
         roles=roles,
         users=users,
         audit=audit,
+        email_sender=email_sender,
         default_ttl_hours=settings.invitation_ttl_hours,
+        frontend_base_url=settings.frontend_base_url,
     )
 
 

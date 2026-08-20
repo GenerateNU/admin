@@ -1,4 +1,5 @@
 from admin.core.audit import AuditLog
+from admin.core.errors import NotFoundError
 from admin.domain.access import PermissionSet, ResolvedAccess
 from admin.domain.enums import (
     AccessRequestStatus,
@@ -14,6 +15,7 @@ from admin.schemas.audit import AuditEntry
 from admin.schemas.invitation import InvitationRead
 from admin.schemas.session import Identity, Session
 from admin.schemas.user import UserRead
+from admin.services.invitation import hash_token
 
 
 class AccessService:
@@ -36,11 +38,6 @@ class AccessService:
         user = await self._users.get_by_entra_object_id(identity.entra_object_id)
 
         if user is None:
-            invitation = await self._invitations.find_open_for_email(identity.email)
-            if invitation is not None:
-                user = await self._accept_invitation(identity, invitation)
-
-        if user is None:
             return ResolvedAccess(
                 session=Session(
                     access_state=await self._state_without_account(identity),
@@ -51,7 +48,20 @@ class AccessService:
 
         return await self._session_for_user(identity, user)
 
+    async def accept_invitation(self, identity: Identity, token: str) -> ResolvedAccess:
+        invitation = await self._invitations.find_open_for_email_and_token(
+            identity.email, hash_token(token)
+        )
+        if invitation is None:
+            raise NotFoundError("no matching invitation for that email and token")
+
+        user = await self._accept_invitation(identity, invitation)
+        return await self._session_for_user(identity, user)
+
     async def _state_without_account(self, identity: Identity) -> AccessState:
+        if await self._invitations.find_open_for_email(identity.email) is not None:
+            return AccessState.INVITED
+
         request = await self._access_requests.find_latest_for_email(identity.email)
         if request is None:
             return AccessState.NO_ACCESS

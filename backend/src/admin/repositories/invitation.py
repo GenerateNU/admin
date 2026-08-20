@@ -70,6 +70,23 @@ class InvitationRepository(Repository):
         )
         return InvitationRead.from_optional_row(row)
 
+    async def find_open_for_email_and_token(
+        self, email: str, token_hash: str
+    ) -> InvitationRead | None:
+        row = await self.connection.fetchrow(
+            f"""
+            {INVITATION_SELECT}
+            WHERE i.email = $1
+              AND i.token_hash = $2
+              AND i.accepted_at IS NULL
+              AND i.revoked_at IS NULL
+              AND i.expires_at > now()
+            """,
+            email.lower(),
+            token_hash,
+        )
+        return InvitationRead.from_optional_row(row)
+
     async def list_open(self) -> list[InvitationRead]:
         rows = await self.connection.fetch(
             f"""

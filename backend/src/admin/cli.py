@@ -1,16 +1,24 @@
 import asyncio
+import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
+import httpx
 import typer
 
 from admin.core.config import Settings, get_settings
 from admin.core.database import DBConnection, create_pool
+from admin.core.email import EmailSender, build_email_sender
 from admin.domain.permissions import (
     PERMISSION_DESCRIPTIONS,
     ROLE_DEFINITIONS,
+    ROLE_DEFINITIONS_BY_KEY,
     Permission,
     SystemRole,
 )
+from admin.repositories.invitation import InvitationRepository
+from admin.repositories.role import RoleRepository
+from admin.repositories.user import UserRepository
 from admin.services.invitation import generate_token
 
 app = typer.Typer(help="generate-admin management commands")
@@ -68,7 +76,9 @@ async def _sync_roles(connection: DBConnection) -> None:
         )
 
 
-async def _ensure_owner_invitation(connection: DBConnection, settings: Settings) -> None:
+async def _ensure_owner_invitation(
+    connection: DBConnection, settings: Settings, email_sender: EmailSender
+) -> None:
     email = settings.initial_owner_email.strip().lower()
     if not email:
         return
@@ -109,6 +119,12 @@ async def _ensure_owner_invitation(connection: DBConnection, settings: Settings)
         token_hash,
         datetime.now(UTC) + timedelta(hours=settings.invitation_ttl_hours),
     )
+    await email_sender.send_invitation(
+        email=email,
+        role_name=ROLE_DEFINITIONS_BY_KEY[SystemRole.OWNER].name,
+        token=token,
+        app_url=settings.frontend_base_url,
+    )
     print(f"owner invitation created for {email}")
     print(f"invitation token: {token}")
 
@@ -116,19 +132,101 @@ async def _ensure_owner_invitation(connection: DBConnection, settings: Settings)
 async def _seed() -> None:
     settings = get_settings()
     pool = await create_pool(settings.database)
+    client = httpx.AsyncClient()
     try:
+        email_sender = build_email_sender(settings.resend, client)
         async with pool.acquire() as connection, connection.transaction():
             await _sync_permissions(connection)
             await _sync_roles(connection)
-            await _ensure_owner_invitation(connection, settings)
+            await _ensure_owner_invitation(connection, settings, email_sender)
         print("seed complete")
     finally:
+        await client.aclose()
         await pool.close()
 
 
 @app.command()
 def seed() -> None:
     asyncio.run(_seed())
+
+
+async def _invite(email: str, role_key: str, expires_in_hours: int | None) -> None:
+    settings = get_settings()
+    pool = await create_pool(settings.database)
+    client = httpx.AsyncClient()
+    try:
+        email_sender = build_email_sender(settings.resend, client)
+        async with pool.acquire() as connection, connection.transaction():
+            users = UserRepository(connection)
+            roles = RoleRepository(connection)
+            invitations = InvitationRepository(connection)
+
+            if await users.get_by_email(email) is not None:
+                raise typer.BadParameter(f"{email} is already a member")
+
+            role = await roles.get_by_key(role_key)
+            if role is None:
+                raise typer.BadParameter(f"no role with key {role_key!r} (run `just seed` first)")
+
+            if await invitations.find_open_for_email(email) is not None:
+                raise typer.BadParameter(f"an open invitation already exists for {email}")
+
+            token, token_hash = generate_token()
+            ttl_hours = expires_in_hours or settings.invitation_ttl_hours
+            expires_at = datetime.now(UTC) + timedelta(hours=ttl_hours)
+
+            await invitations.create(
+                email=email,
+                role_id=role.id,
+                token_hash=token_hash,
+                invited_by=None,
+                expires_at=expires_at,
+            )
+            await email_sender.send_invitation(
+                email=email, role_name=role.name, token=token, app_url=settings.frontend_base_url
+            )
+
+        print(f"invitation created for {email} ({role_key})")
+        print(f"invitation token: {token}")
+    finally:
+        await client.aclose()
+        await pool.close()
+
+
+@app.command()
+def invite(
+    email: str = typer.Argument(..., help="Email address to invite"),
+    role: str = typer.Option(
+        ..., "--role", "-r", help="Role key, e.g. owner, admin, or a custom role from `just seed`"
+    ),
+    expires_in_hours: int | None = typer.Option(
+        None, "--expires-in-hours", help="Defaults to INVITATION_TTL_HOURS"
+    ),
+) -> None:
+    """Create an invitation for local/dev use and print the raw token.
+
+    Skips the permission checks InvitationService.create enforces over the API (delegation
+    rules, who's allowed to grant what) since this runs with direct DB access, not as a given
+    actor. The token is only ever shown here — the database only ever stores its hash.
+    """
+    asyncio.run(_invite(email.strip().lower(), role, expires_in_hours))
+
+
+@app.command()
+def openapi(output: Path = Path("../openapi.json")) -> None:
+    """Write the OpenAPI schema to disk.
+
+    Deliberately does not boot the server: FastAPI can produce the schema from the route table
+    alone, so codegen works offline and in CI without Postgres or Redis. Output is stable across
+    runs because the route table and Pydantic field order are, which is what the CI drift check
+    relies on; keys are left in declaration order rather than sorted so the generated types read
+    like the models they came from.
+    """
+    from admin.main import create_app
+
+    schema = create_app().openapi()
+    output.write_text(json.dumps(schema, indent=2) + "\n")
+    print(f"wrote {output}")
 
 
 if __name__ == "__main__":

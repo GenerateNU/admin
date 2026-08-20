@@ -4,6 +4,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from admin.core.audit import AuditLog
+from admin.core.email import EmailSender
 from admin.core.errors import ConflictError, NotFoundError, ValidationError
 from admin.domain.access import PermissionSet
 from admin.domain.enums import AuditAction
@@ -18,9 +19,13 @@ from admin.services.guards import ensure_can_delegate
 TOKEN_BYTES = 32
 
 
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def generate_token() -> tuple[str, str]:
     token = secrets.token_urlsafe(TOKEN_BYTES)
-    return token, hashlib.sha256(token.encode()).hexdigest()
+    return token, hash_token(token)
 
 
 class InvitationService:
@@ -31,13 +36,17 @@ class InvitationService:
         roles: RoleRepository,
         users: UserRepository,
         audit: AuditLog,
+        email_sender: EmailSender,
         default_ttl_hours: int,
+        frontend_base_url: str,
     ) -> None:
         self._invitations = invitations
         self._roles = roles
         self._users = users
         self._audit = audit
+        self._email_sender = email_sender
         self._default_ttl_hours = default_ttl_hours
+        self._frontend_base_url = frontend_base_url
 
     async def create(
         self,
@@ -81,6 +90,10 @@ class InvitationService:
                 resource_id=str(invitation.id),
                 after={"email": email, "role_key": role.key},
             )
+        )
+
+        await self._email_sender.send_invitation(
+            email=email, role_name=role.name, token=token, app_url=self._frontend_base_url
         )
 
         return InvitationCreated(invitation=invitation, token=token)

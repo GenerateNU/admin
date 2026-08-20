@@ -5,6 +5,7 @@
 - [uv](https://docs.astral.sh/uv/) (Python 3.12+)
 - Docker, for Postgres / Redis / LocalStack
 - [just](https://github.com/casey/just)
+- Node 22+, for the frontend (orval requires >= 22.18); `nvm use` picks it up from `.nvmrc`
 
 ## Quickstart
 
@@ -19,6 +20,8 @@ just dev                 # http://localhost:8000
 ```
 
 Check it with `curl localhost:8000/health`. API docs are at `/docs`.
+
+For the Next.js admin console, see [`frontend/README.md`](frontend/README.md).
 
 ## Services
 
@@ -41,6 +44,8 @@ Docker compose uses offset host ports so it does not collide with anything alrea
 | `just rollback`    | undo the last migration          |
 | `just revision <name>`  | create a migration               |
 | `just seed`        | sync roles and permissions       |
+| `just openapi`     | write `openapi.json` (no server) |
+| `just gen`         | `openapi` + regenerate the TS client |
 | `just test`        | pytest                           |
 | `just lint`        | ruff check + format check        |
 | `just fmt`         | ruff autofix + format            |
@@ -61,3 +66,4 @@ uses a real Redis.
 - test: Postgres and Redis service containers, migrations, then pytest
 
 It mirrors `just check`.
+

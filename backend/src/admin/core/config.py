@@ -101,16 +101,27 @@ class StorageConfig(BaseConfig):
         return f"{base.rstrip('/')}/{key}"
 
 
+class ResendConfig(BaseConfig):
+    api_key: SecretStr = Field(default=SecretStr(""), alias="RESEND_API_KEY")
+    from_email: str = Field(default="", alias="RESEND_FROM_EMAIL")
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(self.api_key.get_secret_value() and self.from_email)
+
+
 class Settings(BaseConfig):
     app: AppConfig = Field(default_factory=AppConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     entra: EntraConfig = Field(default_factory=EntraConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
+    resend: ResendConfig = Field(default_factory=ResendConfig)
 
     cors_allowed_origins_raw: str = Field(default="", alias="CORS_ALLOWED_ORIGINS")
     redis_url: str = Field(default="", alias="REDIS_URL")
     initial_owner_email: str = ""
     invitation_ttl_hours: int = 336
+    frontend_base_url: str = Field(default="http://localhost:3000", alias="FRONTEND_BASE_URL")
 
     @property
     def cors_allowed_origins(self) -> list[str]:

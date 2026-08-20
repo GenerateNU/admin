@@ -1,0 +1,16 @@
+{
+  "name": "generate-admin",
+  "private": true,
+  "engines": {
+    "node": ">=22.18"
+  },
+  "workspaces": [
+    "frontend",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace frontend",
+    "build": "npm run build --workspace frontend",
+    "gen": "npm run gen --workspace @generatenu/api"
+  }
+}

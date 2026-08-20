@@ -10,6 +10,7 @@ from admin.api.router import api_router, root_router
 from admin.core.cache import build_cache
 from admin.core.config import Settings, get_settings
 from admin.core.database import create_pool
+from admin.core.email import build_email_sender
 from admin.core.errors import DomainError
 from admin.core.logging import configure_logging, get_logger
 from admin.core.openapi import operation_id_for
@@ -41,6 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     app.state.cache = cache
     app.state.storage = S3Storage(settings.storage, cache)
     app.state.token_verifier = build_token_verifier(settings.entra, client)
+    app.state.email_sender = build_email_sender(settings.resend, client)
 
     logger.info("application_started", environment=settings.app.environment.value)
 
