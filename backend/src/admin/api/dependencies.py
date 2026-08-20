@@ -23,6 +23,8 @@ from admin.domain.permissions import Permission
 from admin.repositories import (
     AccessRequestRepository,
     AuditRepository,
+    BranchDraftRepository,
+    BranchRepository,
     InvitationRepository,
     MediaRepository,
     RoleRepository,
@@ -32,6 +34,7 @@ from admin.schemas.session import Identity, Session
 from admin.schemas.user import UserRead
 from admin.services.access import AccessService
 from admin.services.access_request import AccessRequestService
+from admin.services.branch import BranchService
 from admin.services.invitation import InvitationService
 from admin.services.media import MediaService
 from admin.services.member import MemberService
@@ -111,6 +114,14 @@ def get_media_repository(connection: Connection) -> MediaRepository:
     return MediaRepository(connection)
 
 
+def get_branch_draft_repository(connection: Connection) -> BranchDraftRepository:
+    return BranchDraftRepository(connection)
+
+
+def get_branch_repository(connection: Connection) -> BranchRepository:
+    return BranchRepository(connection)
+
+
 Users = Annotated[UserRepository, Depends(get_user_repository)]
 Roles = Annotated[RoleRepository, Depends(get_role_repository)]
 Invitations = Annotated[InvitationRepository, Depends(get_invitation_repository)]
@@ -118,6 +129,8 @@ AccessRequests = Annotated[AccessRequestRepository, Depends(get_access_request_r
 Audit = Annotated[AuditLog, Depends(get_audit_log)]
 AuditEntries = Annotated[AuditRepository, Depends(get_audit_repository)]
 Media = Annotated[MediaRepository, Depends(get_media_repository)]
+BranchDrafts = Annotated[BranchDraftRepository, Depends(get_branch_draft_repository)]
+Branches = Annotated[BranchRepository, Depends(get_branch_repository)]
 
 
 def get_access_service(
@@ -171,11 +184,18 @@ def get_media_service(media: Media, storage: Storage, audit: Audit) -> MediaServ
     return MediaService(media=media, storage=storage, audit=audit)
 
 
+def get_branch_service(
+    drafts: BranchDrafts, published: Branches, storage: Storage, audit: Audit
+) -> BranchService:
+    return BranchService(drafts=drafts, published=published, storage=storage, audit=audit)
+
+
 AccessServiceDep = Annotated[AccessService, Depends(get_access_service)]
 MemberServiceDep = Annotated[MemberService, Depends(get_member_service)]
 InvitationServiceDep = Annotated[InvitationService, Depends(get_invitation_service)]
 AccessRequestServiceDep = Annotated[AccessRequestService, Depends(get_access_request_service)]
 MediaServiceDep = Annotated[MediaService, Depends(get_media_service)]
+BranchServiceDep = Annotated[BranchService, Depends(get_branch_service)]
 
 
 async def get_identity(

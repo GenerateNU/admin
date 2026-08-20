@@ -14,6 +14,9 @@ class Permission(StrEnum):
     AUDIT_READ = "core.audit.read"
     MEDIA_READ = "core.media.read"
     MEDIA_DELETE = "core.media.delete"
+    BRANCHES_READ = "core.branches.read"
+    BRANCHES_MANAGE = "core.branches.manage"
+    BRANCHES_PUBLISH = "core.branches.publish"
 
     @property
     def description(self) -> str:
@@ -32,6 +35,9 @@ PERMISSION_DESCRIPTIONS: dict[Permission, str] = {
     Permission.AUDIT_READ: "Read the audit log",
     Permission.MEDIA_READ: "View private files uploaded by other members",
     Permission.MEDIA_DELETE: "Delete files uploaded by other members",
+    Permission.BRANCHES_READ: "View branch drafts and publish status",
+    Permission.BRANCHES_MANAGE: "Create, edit, delete, and reorder branch drafts",
+    Permission.BRANCHES_PUBLISH: "Publish or discard branch draft changes",
 }
 
 

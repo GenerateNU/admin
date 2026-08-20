@@ -19,6 +19,12 @@ PRESETS: dict[MediaPurpose, MediaPreset] = {
         visibility=MediaVisibility.PUBLIC,
         mime_types=frozenset({"image/jpeg", "image/png", "image/webp"}),
     ),
+    MediaPurpose.BRANCH_ICON: MediaPreset(
+        max_edge=256,
+        max_bytes=262_144,
+        visibility=MediaVisibility.PUBLIC,
+        mime_types=frozenset({"image/jpeg", "image/png", "image/webp"}),
+    ),
 }
 
 

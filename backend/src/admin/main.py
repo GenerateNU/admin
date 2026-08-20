@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from admin.api.router import api_router, root_router
+from admin.api.router import api_router, public_router, root_router
 from admin.core.cache import build_cache
 from admin.core.config import Settings, get_settings
 from admin.core.database import create_pool
@@ -82,6 +82,7 @@ def create_app() -> FastAPI:
 
     app.include_router(root_router)
     app.include_router(api_router)
+    app.include_router(public_router)
     return app
 
 
